@@ -86,7 +86,9 @@
             <div class="text-center">
                 <img src="https://raw.githubusercontent.com/srpcom/netlify/main/logo%20kecil%20srpcom.png" alt="Logo SRPCOM" class="mx-auto h-16 w-auto" onerror="this.onerror=null; this.src='https://placehold.co/100x100/eab308/ffffff?text=SRPCOM';">
                 <h1 class="mt-4 text-3xl font-bold text-white">SRPCOM OTP XL</h1>
-                <p class="text-sm text-gray-200 mt-1">Login mudah untuk kelola akun XL Anda</p>
+                <p class="text-sm text-gray-200 mt-1">
+                    <a href="https://t.me/srpcomgroup" target="_blank" class="hover:underline">silakan join ke t.me/srpcomgroup</a>
+                </p>
             </div>
 
             <!-- Main Form Section -->
@@ -94,7 +96,7 @@
                 
                 <!-- MSISDN (Phone Number) Input -->
                 <div>
-                    <label for="msisdn" class="block text-sm font-medium text-gray-200">Masukkan nomer XL anda disini</label>
+                    <label for="msisdn" id="msisdn-label" class="block text-sm font-medium text-yellow-400 animate-pulse">Masukkan nomer XL disini</label>
                     <input type="number" id="msisdn" name="msisdn" class="glass-input pulsating-border mt-1 p-3 bg-transparent text-white rounded-lg w-full focus:outline-none" placeholder="Contoh: 0878..." required>
                 </div>
 
@@ -165,12 +167,20 @@ $(document).ready(function(){
 
     // 1. Logika untuk input nomor XL
     $('#msisdn').on('input', function() {
+        // Logika untuk menyembunyikan label
+        if ($(this).val().length > 0) {
+            $('#msisdn-label').fadeOut('fast');
+        } else {
+            $('#msisdn-label').fadeIn('fast');
+        }
+
+        // Logika untuk menampilkan langkah berikutnya
         if ($(this).val().length >= 11) {
             $('#otp-request-section').slideDown();
             $('#log-section').slideDown();
         } else {
             $('#otp-request-section').slideUp();
-            // Optional: Sembunyikan semua bagian bawah jika nomor diedit menjadi kurang dari 11
+            // Sembunyikan semua bagian bawah jika nomor diedit menjadi kurang dari 11
             $('#log-section, #otp-input-section, #login-button-section, #checkQuotaSection, #hasilPaket').slideUp();
         }
     });
@@ -205,7 +215,7 @@ $(document).ready(function(){
                 // Pengecekan spesifik sesuai permintaan
                 if (res.message === "Nomor telah diverifikasi, siap digunakan untuk tembak paket!") {
                     $('#cover-spin').hide();
-                    logMessage(res.message + ' Proses selesai.', false);
+                    logMessage("Nomor telah diverifikasi, siap digunakan untuk tembak paket!. silakan lanjut pembayaran dan konfirmasi ke t.me/srpcomadmin untuk segera diproses.", false);
                     // Sembunyikan tombol minta OTP karena sudah selesai
                     $('#otp-request-section').slideUp();
                 } else {
