@@ -101,9 +101,10 @@
                 </div>
 
                 <!-- Bagian yang muncul setelah nomor diinput -->
-                <div id="otp-request-section" style="display: none;">
+                <div id="action-buttons-section" style="display: none;">
                     <div class="flex space-x-4 pt-2">
                          <button type="button" class="w-full bg-yellow-500 text-white font-semibold p-3 rounded-lg hover:bg-yellow-600 transition-colors duration-300 shadow-lg" id="reqOTP">MINTA OTP</button>
+                         <button type="button" class="w-full bg-blue-500 text-white font-semibold p-3 rounded-lg hover:bg-blue-600 transition-colors duration-300 shadow-lg" id="checkQuotaPublicBtn">CEK KUOTA</button>
                     </div>
                 </div>
 
@@ -123,9 +124,9 @@
                 <input type="hidden" id="auth_id" name="auth_id" value="">
                 <input type="hidden" id="access_token_temp" name="access_token_temp" value="">
                 
-                <!-- Section for Check Quota button, initially hidden -->
-                <div id="checkQuotaSection" style="display: none;" class="pt-2">
-                    <button type="button" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 transition-colors duration-300 shadow-xl" id="checkQuota">
+                <!-- Section for Check Quota (setelah login OTP), awalnya tersembunyi -->
+                <div id="checkQuotaLoggedInSection" style="display: none;" class="pt-2">
+                    <button type="button" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 transition-colors duration-300 shadow-xl" id="checkQuotaLoggedInBtn">
                         🎉 Login Berhasil! Klik Untuk Cek Kuota
                     </button>
                 </div>
@@ -145,7 +146,7 @@
                 </div>
 
                 <div id="hasilPaket" style="display: none;">
-                    <h2 class="text-lg font-semibold mb-2 text-white">Informasi Paket & Kuota</h2>
+                    <h2 class="text-lg font-semibold mb-2 text-white">Informasi Paket & Kuota (Login)</h2>
                     <div class="overflow-x-auto rounded-lg border border-white/20">
                         <table class="min-w-full divide-y divide-white/20 text-sm">
                             <thead class="bg-white/10 text-white">
@@ -179,21 +180,18 @@ $(document).ready(function(){
 
     // 1. Logika untuk input nomor XL
     $('#msisdn').on('input', function() {
-        // Logika untuk menyembunyikan label
         if ($(this).val().length > 0) {
             $('#msisdn-label').fadeOut('fast');
         } else {
             $('#msisdn-label').fadeIn('fast');
         }
 
-        // Logika untuk menampilkan langkah berikutnya
         if ($(this).val().length >= 11) {
-            $('#otp-request-section').slideDown();
+            $('#action-buttons-section').slideDown();
             $('#log-section').slideDown();
         } else {
-            $('#otp-request-section').slideUp();
-            // Sembunyikan semua bagian bawah jika nomor diedit menjadi kurang dari 11
-            $('#log-section, #otp-input-section, #login-button-section, #checkQuotaSection, #hasilPaket, #payment-buttons-section').slideUp();
+            $('#action-buttons-section').slideUp();
+            $('#log-section, #otp-input-section, #login-button-section, #checkQuotaLoggedInSection, #hasilPaket, #payment-buttons-section').slideUp();
         }
     });
     
@@ -216,24 +214,20 @@ $(document).ready(function(){
 
         logMessage('Mengecek status verifikasi nomor...');
         $('#cover-spin').show(0);
-        $('#payment-buttons-section').slideUp(); // Sembunyikan tombol pembayaran saat proses baru dimulai
+        $('#payment-buttons-section').slideUp();
 
-        // Langkah A: Cek status verifikasi terlebih dahulu
         $.ajax({
             type:'POST',
             url: "https://nomorxlku.my.id/api/check_ver_otp.php",
             data: { username: $('#seller_code').val(), msisdn: msisdn },
             dataType:'JSON',
             success: function(res) {
-                // Pengecekan spesifik sesuai permintaan
                 if (res.message === "Nomor telah diverifikasi, siap digunakan untuk tembak paket!") {
                     $('#cover-spin').hide();
                     logMessage("Nomor telah diverifikasi, siap digunakan untuk tembak paket!. silakan lanjut pembayaran dan konfirmasi ke t.me/srpcomadmin untuk segera diproses.", false);
-                    // Sembunyikan tombol minta OTP dan tampilkan tombol pembayaran
-                    $('#otp-request-section').slideUp();
+                    $('#action-buttons-section').slideUp();
                     $('#payment-buttons-section').slideDown();
                 } else {
-                    // Langkah B: Jika belum terverifikasi atau pesan berbeda, minta OTP baru
                     logMessage('Nomor belum terverifikasi. Meminta OTP baru...', false);
                     $.ajax({
                         type:'POST',
@@ -246,7 +240,7 @@ $(document).ready(function(){
                             logMessage(s.message, isError);
                             if(!isError) {
                                 $('#auth_id').val(s.data.auth_id);
-                                $('#otp-input-section').slideDown(); // Tampilkan input OTP
+                                $('#otp-input-section').slideDown();
                             }
                         },
                         error: function() {
@@ -275,7 +269,7 @@ $(document).ready(function(){
             data:{ msisdn:$('#msisdn').val(), auth_id:$('#auth_id').val(), otp:$('#otp').val() },
             dataType:'JSON',
             error:function(){
-                logMessage('Gagal terhubung ke server. Silakan coba lagi.', true);
+                logMessage('Gagal terhubung ke server.', true);
                 $('#cover-spin').hide();
             },
             cache:false,
@@ -291,30 +285,23 @@ $(document).ready(function(){
                     $('#auth_id').val('');
                     $('#otp').val('');
                     $('#access_token_temp').val(s.data.access_token);
-                    // Sembunyikan form dan tampilkan tombol cek kuota
-                    $('#otp-request-section, #otp-input-section, #login-button-section').slideUp();
-                    $('#checkQuotaSection').slideDown();
+                    $('#action-buttons-section, #otp-input-section, #login-button-section').slideUp();
+                    $('#checkQuotaLoggedInSection').slideDown();
                 }
             }
         });
     });
 
-    // 5. Logika Tombol "CEK KUOTA"
-    $('#checkQuota').click(function(){
+    // 5. Logika Tombol "CEK KUOTA" (setelah login)
+    $('#checkQuotaLoggedInBtn').click(function(){
         $.ajax({
             type:'POST',
             url: "https://nomorxlku.my.id/api/check_quota.php",
             data:{ access_token:$('#access_token_temp').val() },
             dataType:'JSON',
-            error:function(){
-                logMessage('Gagal mengambil data kuota dari server.', true);
-                $('#cover-spin').hide();
-            },
+            error:function(){ logMessage('Gagal mengambil data kuota dari server.', true); $('#cover-spin').hide(); },
             cache:false,
-            beforeSend:function(){
-                logMessage('Memeriksa kuota...');
-                $('#cover-spin').show(0);
-            },
+            beforeSend:function(){ logMessage('Memeriksa kuota...'); $('#cover-spin').show(0); },
             success:function(s){
                 $('#cover-spin').hide();
                 const isError = s.status === false;
@@ -329,7 +316,46 @@ $(document).ready(function(){
         });
     });
 
-    // Fungsi untuk mengisi tabel
+    // 6. LOGIKA BARU: Tombol "CEK KUOTA" (Publik dari KMSP-STORE)
+    $('#checkQuotaPublicBtn').click(function(){
+        const msisdn = $('#msisdn').val();
+        if (!msisdn) {
+            logMessage('Silakan masukkan Nomor XL terlebih dahulu.', true);
+            return;
+        }
+        $.ajax({
+            type:'GET',
+            crossDomain: true,
+            url: "https://apigw.kmsp-store.com/sidompul/v4/cek_kuota?msisdn=" + msisdn + "&isJSON=true",
+            dataType:'JSON',
+            error:function(){
+                $('#cover-spin').hide();
+                logMessage('Terjadi kesalahan saat menghubungi server Cek Kuota. Silakan coba lagi.', true);
+            },
+            cache:false,
+            beforeSend:function(request){
+                logMessage('Mengecek kuota via API publik...');
+                $('#cover-spin').show(0);
+                // Kunci otentikasi statis (hardcoded) dari skrip yang diberikan
+                request.setRequestHeader('Authorization', 'Basic c2lkb21wdWxhcGk6YXBpZ3drbXNw');
+                request.setRequestHeader('X-API-Key', '60ef29aa-a648-4668-90ae-20951ef90c55');
+                request.setRequestHeader('X-App-Version', '4.0.0');
+            },
+            success:function(s){
+                $('#cover-spin').hide();
+                if(s.status === false) {
+                    const errorMessage = s.data && s.data.keteranganError ? s.data.keteranganError : s.message;
+                    logMessage(errorMessage, true);
+                } else if (s.status === true) {
+                    // Menampilkan hasil mentah dari API ke dalam log box
+                    const resultText = s.data && s.data.hasil ? s.data.hasil.replace(/<br\s*\/?>/gi, "\n") : s.message;
+                    logMessage(resultText, false);
+                }
+            }
+        });
+    });
+
+    // Fungsi untuk mengisi tabel (untuk Cek Kuota setelah login)
     function populateTable(data) {
         var tableBody = $("#packageTableBody");
         tableBody.html('');
