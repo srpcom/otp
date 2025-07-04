@@ -138,6 +138,13 @@
                     <p class="text-sm font-semibold text-gray-200">Log Respons:</p>
                     <textarea class="mt-1 w-full p-2 bg-black/20 border border-white/20 text-white rounded-md text-base" id="logResponse" readonly></textarea>
                 </div>
+                
+                <!-- Tombol Salin, awalnya tersembunyi -->
+                <div id="copy-button-section" class="mt-2" style="display: none;">
+                    <button type="button" class="w-full bg-gray-500 text-white font-semibold p-2 rounded-lg hover:bg-gray-600 transition-colors duration-300" id="copyLogBtn">
+                        Salin Hasil Cek Kuota
+                    </button>
+                </div>
 
                 <!-- Tombol Pembayaran, awalnya tersembunyi -->
                 <div id="payment-buttons-section" class="flex space-x-4" style="display: none;">
@@ -178,6 +185,13 @@ $(document).ready(function(){
         el.style.height = (el.scrollHeight) + 'px'; // Set height to content
     }
 
+    // Fungsi untuk mereset tampilan tombol-tombol dinamis
+    function resetDynamicButtons() {
+        $('#payment-buttons-section').slideUp();
+        $('#copy-button-section').slideUp();
+        $('#hasilPaket').slideUp();
+    }
+
     // 1. Logika untuk input nomor XL
     $('#msisdn').on('input', function() {
         if ($(this).val().length > 0) {
@@ -191,7 +205,7 @@ $(document).ready(function(){
             $('#log-section').slideDown();
         } else {
             $('#action-buttons-section').slideUp();
-            $('#log-section, #otp-input-section, #login-button-section, #checkQuotaLoggedInSection, #hasilPaket, #payment-buttons-section').slideUp();
+            $('#log-section, #otp-input-section, #login-button-section, #checkQuotaLoggedInSection, #payment-buttons-section, #copy-button-section').slideUp();
         }
     });
     
@@ -214,7 +228,7 @@ $(document).ready(function(){
 
         logMessage('Mengecek status verifikasi nomor...');
         $('#cover-spin').show(0);
-        $('#payment-buttons-section').slideUp();
+        resetDynamicButtons();
 
         $.ajax({
             type:'POST',
@@ -294,6 +308,7 @@ $(document).ready(function(){
 
     // 5. Logika Tombol "CEK KUOTA" (setelah login)
     $('#checkQuotaLoggedInBtn').click(function(){
+        resetDynamicButtons();
         $.ajax({
             type:'POST',
             url: "https://nomorxlku.my.id/api/check_quota.php",
@@ -309,8 +324,7 @@ $(document).ready(function(){
                 if(!isError) {
                     populateTable(s.data);
                     $('#hasilPaket').slideDown();
-                } else {
-                    $('#hasilPaket').slideUp();
+                    $('#copy-button-section').slideDown(); // Tampilkan tombol salin
                 }
             }
         });
@@ -323,6 +337,7 @@ $(document).ready(function(){
             logMessage('Silakan masukkan Nomor XL terlebih dahulu.', true);
             return;
         }
+        resetDynamicButtons();
         $.ajax({
             type:'GET',
             crossDomain: true,
@@ -336,7 +351,6 @@ $(document).ready(function(){
             beforeSend:function(request){
                 logMessage('Mengecek kuota via API publik...');
                 $('#cover-spin').show(0);
-                // Kunci otentikasi statis (hardcoded) dari skrip yang diberikan
                 request.setRequestHeader('Authorization', 'Basic c2lkb21wdWxhcGk6YXBpZ3drbXNw');
                 request.setRequestHeader('X-API-Key', '60ef29aa-a648-4668-90ae-20951ef90c55');
                 request.setRequestHeader('X-App-Version', '4.0.0');
@@ -347,12 +361,30 @@ $(document).ready(function(){
                     const errorMessage = s.data && s.data.keteranganError ? s.data.keteranganError : s.message;
                     logMessage(errorMessage, true);
                 } else if (s.status === true) {
-                    // Menampilkan hasil mentah dari API ke dalam log box
                     const resultText = s.data && s.data.hasil ? s.data.hasil.replace(/<br\s*\/?>/gi, "\n") : s.message;
                     logMessage(resultText, false);
+                    $('#copy-button-section').slideDown(); // Tampilkan tombol salin
                 }
             }
         });
+    });
+
+    // 7. LOGIKA BARU: Tombol Salin
+    $('#copyLogBtn').click(function() {
+        const logTextarea = document.getElementById('logResponse');
+        logTextarea.select();
+        logTextarea.setSelectionRange(0, 99999); // Untuk perangkat mobile
+
+        try {
+            document.execCommand('copy');
+            const originalText = $(this).text();
+            $(this).text('Berhasil Disalin!');
+            setTimeout(() => {
+                $(this).text(originalText);
+            }, 2000);
+        } catch (err) {
+            logMessage('Gagal menyalin teks.', true);
+        }
     });
 
     // Fungsi untuk mengisi tabel (untuk Cek Kuota setelah login)
