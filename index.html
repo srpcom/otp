@@ -137,6 +137,13 @@
                     <p class="text-sm font-semibold text-gray-200">Log Respons:</p>
                     <textarea class="mt-1 w-full p-2 bg-black/20 border border-white/20 text-white rounded-md text-xs" id="logResponse" rows="3" readonly></textarea>
                 </div>
+
+                <!-- Tombol Pembayaran, awalnya tersembunyi -->
+                <div id="payment-buttons-section" class="flex space-x-4" style="display: none;">
+                    <a href="https://srpcom.online/qris" target="_blank" class="w-full text-center bg-green-600 text-white font-semibold p-3 rounded-lg hover:bg-green-700 transition-colors duration-300 shadow-lg">QRIS ADMIN</a>
+                    <a href="https://t.me/srpcomadmin" target="_blank" class="w-full text-center bg-blue-500 text-white font-semibold p-3 rounded-lg hover:bg-blue-600 transition-colors duration-300 shadow-lg">TELEGRAM ADMIN</a>
+                </div>
+
                 <div id="hasilPaket" style="display: none;">
                     <h2 class="text-lg font-semibold mb-2 text-white">Informasi Paket & Kuota</h2>
                     <div class="overflow-x-auto rounded-lg border border-white/20">
@@ -181,7 +188,7 @@ $(document).ready(function(){
         } else {
             $('#otp-request-section').slideUp();
             // Sembunyikan semua bagian bawah jika nomor diedit menjadi kurang dari 11
-            $('#log-section, #otp-input-section, #login-button-section, #checkQuotaSection, #hasilPaket').slideUp();
+            $('#log-section, #otp-input-section, #login-button-section, #checkQuotaSection, #hasilPaket, #payment-buttons-section').slideUp();
         }
     });
     
@@ -204,6 +211,7 @@ $(document).ready(function(){
 
         logMessage('Mengecek status verifikasi nomor...');
         $('#cover-spin').show(0);
+        $('#payment-buttons-section').slideUp(); // Sembunyikan tombol pembayaran saat proses baru dimulai
 
         // Langkah A: Cek status verifikasi terlebih dahulu
         $.ajax({
@@ -216,8 +224,9 @@ $(document).ready(function(){
                 if (res.message === "Nomor telah diverifikasi, siap digunakan untuk tembak paket!") {
                     $('#cover-spin').hide();
                     logMessage("Nomor telah diverifikasi, siap digunakan untuk tembak paket!. silakan lanjut pembayaran dan konfirmasi ke t.me/srpcomadmin untuk segera diproses.", false);
-                    // Sembunyikan tombol minta OTP karena sudah selesai
+                    // Sembunyikan tombol minta OTP dan tampilkan tombol pembayaran
                     $('#otp-request-section').slideUp();
+                    $('#payment-buttons-section').slideDown();
                 } else {
                     // Langkah B: Jika belum terverifikasi atau pesan berbeda, minta OTP baru
                     logMessage('Nomor belum terverifikasi. Meminta OTP baru...', false);
