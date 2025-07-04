@@ -117,7 +117,7 @@
                 <!-- Tombol Verifikasi OTP (muncul setelah OTP diinput) -->
                  <div id="login-button-section" style="display: none;">
                     <button type="button" class="w-full bg-green-600 text-white font-semibold p-3 rounded-lg hover:bg-green-700 transition-colors duration-300 shadow-lg" id="verOTP">VERIFIKASI OTP</button>
-                </div>
+                 </div>
 
                 <!-- Hidden fields -->
                 <input type="hidden" id="seller_code" name="seller_code" value="srpcom">
@@ -271,7 +271,7 @@ $(document).ready(function(){
         });
     });
 
-    // 4. Logika Tombol "VERIFIKASI OTP"
+    // 4. Logika Tombol "VERIFIKASI OTP" (KODE YANG DIUBAH)
     $('#verOTP').click(function(){
         if (!$('#msisdn').val() || !$('#otp').val()) {
             logMessage('Nomor XL dan Kode OTP tidak boleh kosong.', true);
@@ -294,13 +294,21 @@ $(document).ready(function(){
             success:function(s){
                 $('#cover-spin').hide();
                 const isError = s.status === false;
-                logMessage(s.message, isError);
+                
                 if(!isError) {
+                    // --- PERUBAHAN DIMULAI DI SINI ---
+                    logMessage('LOGIN BERHASIL', false); // Menampilkan pesan sukses kustom
+                    
                     $('#auth_id').val('');
                     $('#otp').val('');
                     $('#access_token_temp').val(s.data.access_token);
                     $('#action-buttons-section, #otp-input-section, #login-button-section').slideUp();
-                    $('#checkQuotaLoggedInSection').slideDown();
+                    
+                    // Baris berikut dinonaktifkan agar tombol tidak muncul
+                    // $('#checkQuotaLoggedInSection').slideDown(); 
+                    // --- PERUBAHAN SELESAI DI SINI ---
+                } else {
+                    logMessage(s.message, true); // Menampilkan pesan error dari server jika gagal
                 }
             }
         });
