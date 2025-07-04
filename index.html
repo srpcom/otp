@@ -135,7 +135,7 @@
             <div id="log-section" class="space-y-4 pt-4" style="display: none;">
                 <div>
                     <p class="text-sm font-semibold text-gray-200">Log Respons:</p>
-                    <textarea class="mt-1 w-full p-2 bg-black/20 border border-white/20 text-white rounded-md text-xs" id="logResponse" rows="3" readonly></textarea>
+                    <textarea class="mt-1 w-full p-2 bg-black/20 border border-white/20 text-white rounded-md text-base" id="logResponse" readonly></textarea>
                 </div>
 
                 <!-- Tombol Pembayaran, awalnya tersembunyi -->
@@ -165,11 +165,16 @@
 
 <script>
 $(document).ready(function(){
-    // Fungsi untuk menampilkan pesan di log dengan warna
+    // Fungsi untuk menampilkan pesan di log dengan warna dan auto-resize
     function logMessage(message, isError = false) {
         const logBox = $('#logResponse');
         logBox.val(message);
         logBox.css('color', isError ? '#fca5a5' : '#86efac'); // Merah muda atau Hijau muda
+        
+        // Auto-resize logic
+        const el = logBox[0];
+        el.style.height = 'auto'; // Reset height
+        el.style.height = (el.scrollHeight) + 'px'; // Set height to content
     }
 
     // 1. Logika untuk input nomor XL
