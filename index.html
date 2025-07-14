@@ -21,56 +21,39 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
     <style>
-        /* Menggunakan font Poppins untuk seluruh halaman */
-        body {
-            font-family: 'Poppins', sans-serif;
-        }
-
-        /* Efek Kaca (Glassmorphism) untuk kartu utama */
+        body { font-family: 'Poppins', sans-serif; }
         .glass-card {
             background: rgba(0, 0, 0, 0.25);
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.18);
         }
-
-        /* Animasi border berdenyut */
         @keyframes pulse-green {
             0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
             70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
             100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
         }
         .pulsating-border {
-            border: 2px solid #22c55e; /* Warna hijau */
+            border: 2px solid #22c55e;
             animation: pulse-green 2s infinite;
         }
-
-        /* Custom styles for the loading spinner */
         #cover-spin {
             position:fixed; width:100%; height:100%; left:0; right:0; top:0; bottom:0;
             background-color: rgba(0, 0, 0, 0.5);
             z-index:9999; display:none;
         }
-
-        @keyframes spin {
-            from {transform:rotate(0deg);} to {transform:rotate(360deg);}
-        }
-
+        @keyframes spin { from {transform:rotate(0deg);} to {transform:rotate(360deg);} }
         #cover-spin::after {
             content:''; display:block; position:absolute; left: 50%; top: 50%;
             margin-left: -20px; margin-top: -20px; width:40px; height:40px;
             border-style:solid; border-color:#16a34a; border-top-color:transparent;
             border-width: 4px; border-radius:50%; animation: spin .8s linear infinite;
         }
-
-        /* Menghilangkan panah di input number */
         input[type=number]::-webkit-inner-spin-button,
         input[type=number]::-webkit-outer-spin-button {
             -webkit-appearance: none; margin: 0;
         }
         input[type=number] { -moz-appearance: textfield; }
-        
-        /* Style untuk placeholder pada input transparan */
         .glass-input::placeholder { color: rgba(255, 255, 255, 0.5); }
     </style>
 </head>
@@ -100,7 +83,7 @@
                     <input type="number" id="msisdn" name="msisdn" class="glass-input pulsating-border mt-1 p-3 bg-transparent text-white rounded-lg w-full focus:outline-none" placeholder="Contoh: 0878..." required>
                 </div>
 
-                <!-- Bagian yang muncul setelah nomor diinput -->
+                <!-- Action Buttons -->
                 <div id="action-buttons-section" style="display: none;">
                     <div class="flex space-x-4 pt-2">
                          <button type="button" class="w-full bg-yellow-500 text-white font-semibold p-3 rounded-lg hover:bg-yellow-600 transition-colors duration-300 shadow-lg" id="reqOTP">MINTA OTP</button>
@@ -108,23 +91,23 @@
                     </div>
                 </div>
 
-                <!-- OTP Code Input (muncul setelah OTP diminta) -->
+                <!-- OTP Input -->
                 <div id="otp-input-section" style="display: none;">
                     <label for="otp" class="block text-sm font-medium text-gray-200">Kode OTP</label>
                     <input type="text" id="otp" name="otp" class="glass-input mt-1 p-3 bg-transparent border border-white/30 text-white rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-green-400" placeholder="Masukkan 6 digit kode" required>
                 </div>
 
-                <!-- Tombol Verifikasi OTP (muncul setelah OTP diinput) -->
+                <!-- Verify OTP Button -->
                  <div id="login-button-section" style="display: none;">
                     <button type="button" class="w-full bg-green-600 text-white font-semibold p-3 rounded-lg hover:bg-green-700 transition-colors duration-300 shadow-lg" id="verOTP">VERIFIKASI OTP</button>
                 </div>
 
-                <!-- Hidden fields -->
+                <!-- Hidden fields for state management -->
                 <input type="hidden" id="seller_code" name="seller_code" value="srpcom">
                 <input type="hidden" id="auth_id" name="auth_id" value="">
                 <input type="hidden" id="access_token_temp" name="access_token_temp" value="">
                 
-                <!-- Section for Check Quota (setelah login OTP), awalnya tersembunyi -->
+                <!-- Logged In Check Quota Button -->
                 <div id="checkQuotaLoggedInSection" style="display: none;" class="pt-2">
                     <button type="button" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 transition-colors duration-300 shadow-xl" id="checkQuotaLoggedInBtn">
                         🎉 Login Berhasil! Klik Untuk Cek Kuota
@@ -139,14 +122,12 @@
                     <textarea class="mt-1 w-full p-2 bg-black/20 border border-white/20 text-white rounded-md text-base" id="logResponse" readonly></textarea>
                 </div>
                 
-                <!-- Tombol Salin, awalnya tersembunyi -->
                 <div id="copy-button-section" class="mt-2" style="display: none;">
                     <button type="button" class="w-full bg-gray-500 text-white font-semibold p-2 rounded-lg hover:bg-gray-600 transition-colors duration-300" id="copyLogBtn">
                         Salin Hasil Cek Kuota
                     </button>
                 </div>
 
-                <!-- Tombol Pembayaran, awalnya tersembunyi -->
                 <div id="payment-buttons-section" class="flex space-x-4" style="display: none;">
                     <a href="https://drive.google.com/file/d/1KMMRc4FlcedA-XNdUdVpYCdBU5AnbvWW/view?usp=sharing" target="_blank" class="w-full text-center bg-green-600 text-white font-semibold p-3 rounded-lg hover:bg-green-700 transition-colors duration-300 shadow-lg">PAYMENT (QRIS)</a>
                     <a href="https://t.me/srpcomadmin" target="_blank" class="w-full text-center bg-blue-500 text-white font-semibold p-3 rounded-lg hover:bg-blue-600 transition-colors duration-300 shadow-lg">TELEGRAM ADMIN</a>
@@ -173,232 +154,218 @@
 
 <script>
 $(document).ready(function(){
-    // Fungsi untuk menampilkan pesan di log dengan warna dan auto-resize
-    function logMessage(message, isError = false) {
+    // !!! PENTING: URL Aplikasi Web Anda dari Google Apps Script telah dimasukkan !!!
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxIifb625-oRg5uZ_SmnR_eI8zjoHLi1DYmk4jnbfbHgHQYFNOuHMcwJZdEsn2lSLrc/exec";
+    
+    // Variabel global untuk timer animasi
+    let _animation_timer = null;
+
+    /**
+     * Fungsi utama untuk berkomunikasi dengan backend Google Apps Script.
+     * @param {string} action - Nama aksi yang akan diproses oleh GAS.
+     * @param {string} msisdn - Nomor telepon target.
+     * @param {object} payload - Data tambahan yang dibutuhkan oleh API.
+     * @returns {Promise<object>} - Promise yang akan resolve dengan data JSON dari GAS.
+     */
+    async function callGasBackend(action, msisdn, payload = {}) {
+        $('#cover-spin').show(0);
+        try {
+            const response = await fetch(GAS_WEB_APP_URL, {
+                method: 'POST',
+                mode: 'cors',
+                headers: {
+                    'Content-Type': 'text/plain;charset=utf-8', // Diperlukan untuk GAS
+                },
+                body: JSON.stringify({ action, msisdn, payload })
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error("Error calling GAS Backend:", error);
+            return { status: false, message: `Gagal terhubung ke backend: ${error.message}` };
+        } finally {
+            $('#cover-spin').hide();
+        }
+    }
+
+    /**
+     * Fungsi untuk menampilkan pesan di log, dengan opsi animasi.
+     * @param {string} message - Pesan yang akan ditampilkan.
+     * @param {boolean} isError - Apakah pesan ini adalah pesan error.
+     * @param {boolean} isProcessing - Apakah akan menampilkan animasi "loading".
+     */
+    function logMessage(message, isError = false, isProcessing = false) {
         const logBox = $('#logResponse');
-        logBox.val(message);
-        logBox.css('color', isError ? '#fca5a5' : '#86efac'); // Merah muda atau Hijau muda
         
-        // Auto-resize logic
-        const el = logBox[0];
-        el.style.height = 'auto'; // Reset height
-        el.style.height = (el.scrollHeight) + 'px'; // Set height to content
-    }
-
-    // Fungsi untuk mereset tampilan tombol-tombol dinamis
-    function resetDynamicButtons() {
-        $('#payment-buttons-section').slideUp();
-        $('#copy-button-section').slideUp();
-        $('#hasilPaket').slideUp();
-    }
-
-    // 1. Logika untuk input nomor XL
-    $('#msisdn').on('input', function() {
-        if ($(this).val().length > 0) {
-            $('#msisdn-label').fadeOut('fast');
-        } else {
-            $('#msisdn-label').fadeIn('fast');
+        // Hentikan animasi sebelumnya jika ada
+        if (_animation_timer) {
+            clearInterval(_animation_timer);
+            _animation_timer = null;
         }
 
+        logBox.val(message);
+        logBox.css('color', isError ? '#fca5a5' : '#86efac');
+        
+        // Jika ini adalah pesan proses, mulai animasi titik-titik
+        if (isProcessing) {
+            const baseMessage = message.replace(/\./g, ''); // Hapus titik yang mungkin sudah ada
+            let dotCount = 0;
+            _animation_timer = setInterval(() => {
+                dotCount = (dotCount + 1) % 4;
+                const dots = '.'.repeat(dotCount);
+                logBox.val(baseMessage + dots);
+            }, 500);
+        }
+        
+        // Atur tinggi textarea secara otomatis
+        const el = logBox[0];
+        el.style.height = 'auto';
+        el.style.height = (el.scrollHeight) + 'px';
+    }
+
+    // Fungsi untuk mereset tampilan tombol dinamis
+    function resetDynamicButtons() {
+        $('#payment-buttons-section, #copy-button-section, #hasilPaket').slideUp();
+    }
+
+    // 1. UI Logic: Input nomor
+    $('#msisdn').on('input', function() {
+        if ($(this).val().length > 0) $('#msisdn-label').fadeOut('fast');
+        else $('#msisdn-label').fadeIn('fast');
+
         if ($(this).val().length >= 11) {
-            $('#action-buttons-section').slideDown();
-            $('#log-section').slideDown();
+            $('#action-buttons-section, #log-section').slideDown();
         } else {
-            $('#action-buttons-section').slideUp();
-            $('#log-section, #otp-input-section, #login-button-section, #checkQuotaLoggedInSection, #payment-buttons-section, #copy-button-section').slideUp();
+            $('#action-buttons-section, #log-section, #otp-input-section, #login-button-section, #checkQuotaLoggedInSection, #payment-buttons-section, #copy-button-section, #hasilPaket').slideUp();
         }
     });
     
-    // 2. Logika untuk input Kode OTP
+    // 2. UI Logic: Input OTP
     $('#otp').on('input', function() {
-        if ($(this).val().length >= 6) {
-            $('#login-button-section').slideDown();
-        } else {
-            $('#login-button-section').slideUp();
-        }
+        if ($(this).val().length >= 6) $('#login-button-section').slideDown();
+        else $('#login-button-section').slideUp();
     });
 
-    // 3. Logika Tombol "MINTA OTP"
-    $('#reqOTP').click(function(){
+    // 3. Aksi: Minta OTP
+    $('#reqOTP').click(async function(){
         const msisdn = $('#msisdn').val();
         if (!msisdn) {
             logMessage('Silakan masukkan Nomor XL terlebih dahulu.', true);
             return;
         }
-
-        logMessage('Mengecek status verifikasi nomor...');
-        $('#cover-spin').show(0);
+        logMessage('Mengecek status verifikasi nomor...', false, true);
         resetDynamicButtons();
 
-        $.ajax({
-            type:'POST',
-            url: "https://nomorxlku.my.id/api/check_ver_otp.php",
-            data: { username: $('#seller_code').val(), msisdn: msisdn },
-            dataType:'JSON',
-            success: function(res) {
-                if (res.message === "Nomor telah diverifikasi, siap digunakan untuk tembak paket!") {
-                    $('#cover-spin').hide();
-                    logMessage("Nomor telah diverifikasi, siap digunakan untuk tembak paket!. silakan lanjut pembayaran dan konfirmasi ke t.me/srpcomadmin untuk segera diproses.", false);
-                    $('#action-buttons-section').slideUp();
-                    $('#payment-buttons-section').slideDown();
-                } else {
-                    logMessage('Nomor belum terverifikasi. Meminta OTP baru...', false);
-                    $.ajax({
-                        type:'POST',
-                        url: "https://nomorxlku.my.id/api/req_otp.php",
-                        data: { msisdn: msisdn, seller_code: $('#seller_code').val() },
-                        dataType:'JSON',
-                        success: function(s){
-                            $('#cover-spin').hide();
-                            const isError = s.status === false;
-                            logMessage(s.message, isError);
-                            if(!isError) {
-                                $('#auth_id').val(s.data.auth_id);
-                                $('#otp-input-section').slideDown();
-                            }
-                        },
-                        error: function() {
-                            $('#cover-spin').hide();
-                            logMessage('Gagal meminta OTP. Coba lagi.', true);
-                        }
-                    });
-                }
-            },
-            error: function() {
-                $('#cover-spin').hide();
-                logMessage('Gagal mengecek status verifikasi. Coba lagi.', true);
+        let res = await callGasBackend('check_ver_otp', msisdn, { username: $('#seller_code').val(), msisdn: msisdn });
+
+        if (res.message === "Nomor telah diverifikasi, siap digunakan untuk tembak paket!") {
+            logMessage("Nomor telah diverifikasi, siap digunakan untuk tembak paket!. silakan lanjut pembayaran dan konfirmasi ke t.me/srpcomadmin untuk segera diproses.", false);
+            $('#action-buttons-section').slideUp();
+            $('#payment-buttons-section').slideDown();
+        } else {
+            logMessage('Nomor belum terverifikasi. Meminta OTP baru...', false, true);
+            const s = await callGasBackend('req_otp', msisdn, { msisdn: msisdn, seller_code: $('#seller_code').val() });
+            const isError = s.status === false;
+            logMessage(s.message, isError);
+            if (!isError && s.data) {
+                $('#auth_id').val(s.data.auth_id);
+                $('#otp-input-section').slideDown();
             }
-        });
+        }
     });
 
-    // 4. Logika Tombol "VERIFIKASI OTP"
-    $('#verOTP').click(function(){
-        if (!$('#msisdn').val() || !$('#otp').val()) {
+    // 4. Aksi: Verifikasi OTP
+    $('#verOTP').click(async function(){
+        const msisdn = $('#msisdn').val();
+        const otp = $('#otp').val();
+        if (!msisdn || !otp) {
             logMessage('Nomor XL dan Kode OTP tidak boleh kosong.', true);
             return;
         }
-        $.ajax({
-            type:'POST',
-            url: "https://nomorxlku.my.id/api/ver_otp.php",
-            data:{ msisdn:$('#msisdn').val(), auth_id:$('#auth_id').val(), otp:$('#otp').val() },
-            dataType:'JSON',
-            error:function(){
-                logMessage('Gagal terhubung ke server.', true);
-                $('#cover-spin').hide();
-            },
-            cache:false,
-            beforeSend:function(){
-                logMessage('Memverifikasi OTP...');
-                $('#cover-spin').show(0);
-            },
-            success:function(s){
-                $('#cover-spin').hide();
-                const isError = s.status === false;
-                logMessage(s.message, isError);
-                if(!isError) {
-                    $('#auth_id').val('');
-                    $('#otp').val('');
-                    $('#access_token_temp').val(s.data.access_token);
-                    $('#action-buttons-section, #otp-input-section, #login-button-section').slideUp();
-                    $('#checkQuotaLoggedInSection').slideDown();
-                }
-            }
-        });
+        logMessage('Memverifikasi OTP...', false, true);
+        const payload = { msisdn: msisdn, auth_id: $('#auth_id').val(), otp: otp };
+        const s = await callGasBackend('ver_otp', msisdn, payload);
+        
+        const isError = s.status === false;
+        logMessage(s.message, isError);
+        if (!isError && s.data) {
+            $('#auth_id').val('');
+            $('#otp').val('');
+            $('#access_token_temp').val(s.data.access_token);
+            $('#action-buttons-section, #otp-input-section, #login-button-section').slideUp();
+            $('#checkQuotaLoggedInSection').slideDown();
+        }
     });
 
-    // 5. Logika Tombol "CEK KUOTA" (setelah login)
-    $('#checkQuotaLoggedInBtn').click(function(){
+    // 5. Aksi: Cek Kuota (setelah login)
+    $('#checkQuotaLoggedInBtn').click(async function(){
         resetDynamicButtons();
-        $.ajax({
-            type:'POST',
-            url: "https://nomorxlku.my.id/api/check_quota.php",
-            data:{ access_token:$('#access_token_temp').val() },
-            dataType:'JSON',
-            error:function(){ logMessage('Gagal mengambil data kuota dari server.', true); $('#cover-spin').hide(); },
-            cache:false,
-            beforeSend:function(){ logMessage('Memeriksa kuota...'); $('#cover-spin').show(0); },
-            success:function(s){
-                $('#cover-spin').hide();
-                const isError = s.status === false;
-                logMessage(s.message || 'Data kuota berhasil dimuat.', isError);
-                if(!isError) {
-                    populateTable(s.data);
-                    $('#hasilPaket').slideDown();
-                    $('#copy-button-section').slideDown(); // Tampilkan tombol salin
-                }
-            }
-        });
+        logMessage('Memeriksa kuota...', false, true);
+        const msisdn = $('#msisdn').val();
+        const payload = { access_token: $('#access_token_temp').val() };
+        const s = await callGasBackend('check_quota', msisdn, payload);
+
+        const isError = s.status === false;
+        logMessage(s.message || 'Data kuota berhasil dimuat.', isError);
+        if (!isError && s.data) {
+            populateTable(s.data);
+            $('#hasilPaket, #copy-button-section').slideDown();
+        }
     });
 
-    // 6. LOGIKA BARU: Tombol "CEK KUOTA" (Publik dari KMSP-STORE)
-    $('#checkQuotaPublicBtn').click(function(){
+    // 6. Aksi: Cek Kuota Publik
+    $('#checkQuotaPublicBtn').click(async function(){
         const msisdn = $('#msisdn').val();
         if (!msisdn) {
             logMessage('Silakan masukkan Nomor XL terlebih dahulu.', true);
             return;
         }
         resetDynamicButtons();
-        $.ajax({
-            type:'GET',
-            crossDomain: true,
-            url: "https://apigw.kmsp-store.com/sidompul/v4/cek_kuota?msisdn=" + msisdn + "&isJSON=true",
-            dataType:'JSON',
-            error:function(){
-                $('#cover-spin').hide();
-                logMessage('Terjadi kesalahan saat menghubungi server Cek Kuota. Silakan coba lagi.', true);
-            },
-            cache:false,
-            beforeSend:function(request){
-                logMessage('Mengecek kuota via API publik...');
-                $('#cover-spin').show(0);
-                request.setRequestHeader('Authorization', 'Basic c2lkb21wdWxhcGk6YXBpZ3drbXNw');
-                request.setRequestHeader('X-API-Key', '60ef29aa-a648-4668-90ae-20951ef90c55');
-                request.setRequestHeader('X-App-Version', '4.0.0');
-            },
-            success:function(s){
-                $('#cover-spin').hide();
-                if(s.status === false) {
-                    const errorMessage = s.data && s.data.keteranganError ? s.data.keteranganError : s.message;
-                    logMessage(errorMessage, true);
-                } else if (s.status === true) {
-                    const resultText = s.data && s.data.hasil ? s.data.hasil.replace(/<br\s*\/?>/gi, "\n") : s.message;
-                    logMessage(resultText, false);
-                    $('#copy-button-section').slideDown(); // Tampilkan tombol salin
-                }
-            }
-        });
+        logMessage('Proses cek kuota, wait....', false, true); // Teks diubah dan animasi dimulai
+        const s = await callGasBackend('check_quota_public', msisdn);
+
+        // Animasi akan berhenti secara otomatis saat logMessage dipanggil lagi di bawah ini
+        if (s.status === false) {
+            const errorMessage = s.data && s.data.keteranganError ? s.data.keteranganError : s.message;
+            logMessage(errorMessage, true);
+        } else if (s.status === true) {
+            const resultText = s.data && s.data.hasil ? s.data.hasil.replace(/<br\s*\/?>/gi, "\n") : s.message;
+            logMessage(resultText, false);
+            $('#copy-button-section').slideDown();
+        } else {
+             logMessage(s.message || 'Terjadi kesalahan tidak diketahui.', true);
+        }
     });
 
-    // 7. LOGIKA BARU: Tombol Salin
+    // 7. Aksi: Salin Log
     $('#copyLogBtn').click(function() {
         const logTextarea = document.getElementById('logResponse');
         logTextarea.select();
-        logTextarea.setSelectionRange(0, 99999); // Untuk perangkat mobile
-
+        logTextarea.setSelectionRange(0, 99999);
         try {
             document.execCommand('copy');
             const originalText = $(this).text();
             $(this).text('Berhasil Disalin!');
-            setTimeout(() => {
-                $(this).text(originalText);
-            }, 2000);
+            setTimeout(() => $(this).text(originalText), 2000);
         } catch (err) {
             logMessage('Gagal menyalin teks.', true);
         }
     });
 
-    // Fungsi untuk mengisi tabel (untuk Cek Kuota setelah login)
+    // Fungsi untuk mengisi tabel hasil cek kuota login
     function populateTable(data) {
-        var tableBody = $("#packageTableBody");
+        const tableBody = $("#packageTableBody");
         tableBody.html('');
         if (data && data.quotas) {
             data.quotas.forEach(function(quota) {
-                var benefitsHtml = "<ul class='list-disc list-inside space-y-1'>";
+                let benefitsHtml = "<ul class='list-disc list-inside space-y-1'>";
                 quota.benefits.forEach(function(benefit) {
                     benefitsHtml += `<li>${benefit.name}: <b class='text-white'>${benefit.remaining_quota}</b></li>`;
                 });
                 benefitsHtml += "</ul>";
-                var row = `<tr class='hover:bg-white/10'><td class='px-4 py-3 font-medium text-white'>${quota.name}</td><td class='px-4 py-3 text-gray-300'>${quota.expired_at}</td><td class='px-4 py-3 text-gray-300'>${benefitsHtml}</td></tr>`;
+                const row = `<tr class='hover:bg-white/10'><td class='px-4 py-3 font-medium text-white'>${quota.name}</td><td class='px-4 py-3 text-gray-300'>${quota.expired_at}</td><td class='px-4 py-3 text-gray-300'>${benefitsHtml}</td></tr>`;
                 tableBody.append(row);
             });
         }
