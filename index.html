@@ -103,7 +103,6 @@
                 </div>
 
                 <!-- Hidden fields for state management -->
-                <input type="hidden" id="seller_code" name="seller_code" value="srpcom">
                 <input type="hidden" id="auth_id" name="auth_id" value="">
                 <input type="hidden" id="access_token_temp" name="access_token_temp" value="">
                 
@@ -154,33 +153,19 @@
 
 <script>
 $(document).ready(function(){
-    // !!! PENTING: URL Aplikasi Web Anda dari Google Apps Script telah dimasukkan !!!
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxIifb625-oRg5uZ_SmnR_eI8zjoHLi1DYmk4jnbfbHgHQYFNOuHMcwJZdEsn2lSLrc/exec";
-    
-    // Variabel global untuk timer animasi
     let _animation_timer = null;
 
-    /**
-     * Fungsi utama untuk berkomunikasi dengan backend Google Apps Script.
-     * @param {string} action - Nama aksi yang akan diproses oleh GAS.
-     * @param {string} msisdn - Nomor telepon target.
-     * @param {object} payload - Data tambahan yang dibutuhkan oleh API.
-     * @returns {Promise<object>} - Promise yang akan resolve dengan data JSON dari GAS.
-     */
     async function callGasBackend(action, msisdn, payload = {}) {
         $('#cover-spin').show(0);
         try {
             const response = await fetch(GAS_WEB_APP_URL, {
                 method: 'POST',
                 mode: 'cors',
-                headers: {
-                    'Content-Type': 'text/plain;charset=utf-8', // Diperlukan untuk GAS
-                },
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify({ action, msisdn, payload })
             });
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             return await response.json();
         } catch (error) {
             console.error("Error calling GAS Backend:", error);
@@ -190,93 +175,57 @@ $(document).ready(function(){
         }
     }
 
-    /**
-     * Fungsi untuk menampilkan pesan di log, dengan opsi animasi.
-     * @param {string} message - Pesan yang akan ditampilkan.
-     * @param {boolean} isError - Apakah pesan ini adalah pesan error.
-     * @param {boolean} isProcessing - Apakah akan menampilkan animasi "loading".
-     */
     function logMessage(message, isError = false, isProcessing = false) {
         const logBox = $('#logResponse');
-        
-        // Hentikan animasi sebelumnya jika ada
-        if (_animation_timer) {
-            clearInterval(_animation_timer);
-            _animation_timer = null;
-        }
-
-        logBox.val(message);
-        logBox.css('color', isError ? '#fca5a5' : '#86efac');
-        
-        // Jika ini adalah pesan proses, mulai animasi titik-titik
+        if (_animation_timer) clearInterval(_animation_timer);
+        logBox.val(message).css('color', isError ? '#fca5a5' : '#86efac');
         if (isProcessing) {
-            const baseMessage = message.replace(/\./g, ''); // Hapus titik yang mungkin sudah ada
+            const baseMessage = message.replace(/\./g, '');
             let dotCount = 0;
             _animation_timer = setInterval(() => {
                 dotCount = (dotCount + 1) % 4;
-                const dots = '.'.repeat(dotCount);
-                logBox.val(baseMessage + dots);
+                logBox.val(baseMessage + '.'.repeat(dotCount));
             }, 500);
         }
-        
-        // Atur tinggi textarea secara otomatis
         const el = logBox[0];
         el.style.height = 'auto';
         el.style.height = (el.scrollHeight) + 'px';
     }
 
-    // Fungsi untuk mereset tampilan tombol dinamis
     function resetDynamicButtons() {
         $('#payment-buttons-section, #copy-button-section, #hasilPaket').slideUp();
     }
 
-    // 1. UI Logic: Input nomor
     $('#msisdn').on('input', function() {
-        if ($(this).val().length > 0) $('#msisdn-label').fadeOut('fast');
-        else $('#msisdn-label').fadeIn('fast');
-
-        if ($(this).val().length >= 11) {
-            $('#action-buttons-section, #log-section').slideDown();
-        } else {
-            $('#action-buttons-section, #log-section, #otp-input-section, #login-button-section, #checkQuotaLoggedInSection, #payment-buttons-section, #copy-button-section, #hasilPaket').slideUp();
-        }
+        if ($(this).val().length > 0) $('#msisdn-label').fadeOut('fast'); else $('#msisdn-label').fadeIn('fast');
+        if ($(this).val().length >= 11) $('#action-buttons-section, #log-section').slideDown();
+        else $('#action-buttons-section, #log-section, #otp-input-section, #login-button-section, #checkQuotaLoggedInSection, #payment-buttons-section, #copy-button-section, #hasilPaket').slideUp();
     });
     
-    // 2. UI Logic: Input OTP
     $('#otp').on('input', function() {
-        if ($(this).val().length >= 6) $('#login-button-section').slideDown();
-        else $('#login-button-section').slideUp();
+        if ($(this).val().length >= 6) $('#login-button-section').slideDown(); else $('#login-button-section').slideUp();
     });
 
-    // 3. Aksi: Minta OTP
+    // --- Aksi Minta OTP (Alur Baru) ---
     $('#reqOTP').click(async function(){
         const msisdn = $('#msisdn').val();
         if (!msisdn) {
             logMessage('Silakan masukkan Nomor XL terlebih dahulu.', true);
             return;
         }
-        logMessage('Mengecek status verifikasi nomor...', false, true);
+        logMessage('Meminta OTP...', false, true);
         resetDynamicButtons();
-
-        let res = await callGasBackend('check_ver_otp', msisdn, { username: $('#seller_code').val(), msisdn: msisdn });
-
-        if (res.message === "Nomor telah diverifikasi, siap digunakan untuk tembak paket!") {
-            logMessage("Nomor telah diverifikasi, siap digunakan untuk tembak paket!. silakan lanjut pembayaran dan konfirmasi ke t.me/srpcomadmin untuk segera diproses.", false);
-            $('#action-buttons-section').slideUp();
-            $('#payment-buttons-section').slideDown();
-        } else {
-            logMessage('Nomor belum terverifikasi. Meminta OTP baru...', false, true);
-            const s = await callGasBackend('req_otp', msisdn, { msisdn: msisdn, seller_code: $('#seller_code').val() });
-            const isError = s.status === false;
-            logMessage(s.message, isError);
-            if (!isError && s.data) {
-                $('#auth_id').val(s.data.auth_id);
-                $('#otp-input-section').slideDown();
-            }
+        
+        const s = await callGasBackend('req_otp', msisdn, { msisdn: msisdn });
+        const isError = s.status === false;
+        logMessage(s.message, isError);
+        if (!isError && s.data && s.data.auth_id) {
+            $('#auth_id').val(s.data.auth_id);
+            $('#otp-input-section').slideDown();
         }
     });
 
-    // 4. Aksi: Verifikasi OTP
+    // --- Aksi Verifikasi OTP (Alur Baru) ---
     $('#verOTP').click(async function(){
         const msisdn = $('#msisdn').val();
         const otp = $('#otp').val();
@@ -285,12 +234,12 @@ $(document).ready(function(){
             return;
         }
         logMessage('Memverifikasi OTP...', false, true);
-        const payload = { msisdn: msisdn, auth_id: $('#auth_id').val(), otp: otp };
+        const payload = { auth_id: $('#auth_id').val(), otp: otp };
         const s = await callGasBackend('ver_otp', msisdn, payload);
         
         const isError = s.status === false;
         logMessage(s.message, isError);
-        if (!isError && s.data) {
+        if (!isError && s.data && s.data.access_token) {
             $('#auth_id').val('');
             $('#otp').val('');
             $('#access_token_temp').val(s.data.access_token);
@@ -299,7 +248,7 @@ $(document).ready(function(){
         }
     });
 
-    // 5. Aksi: Cek Kuota (setelah login)
+    // --- Aksi Cek Kuota (setelah login) ---
     $('#checkQuotaLoggedInBtn').click(async function(){
         resetDynamicButtons();
         logMessage('Memeriksa kuota...', false, true);
@@ -315,7 +264,7 @@ $(document).ready(function(){
         }
     });
 
-    // 6. Aksi: Cek Kuota Publik
+    // --- Aksi Cek Kuota Publik ---
     $('#checkQuotaPublicBtn').click(async function(){
         const msisdn = $('#msisdn').val();
         if (!msisdn) {
@@ -323,10 +272,9 @@ $(document).ready(function(){
             return;
         }
         resetDynamicButtons();
-        logMessage('Proses cek kuota, wait....', false, true); // Teks diubah dan animasi dimulai
+        logMessage('Proses cek kuota, wait....', false, true);
         const s = await callGasBackend('check_quota_public', msisdn);
 
-        // Animasi akan berhenti secara otomatis saat logMessage dipanggil lagi di bawah ini
         if (s.status === false) {
             const errorMessage = s.data && s.data.keteranganError ? s.data.keteranganError : s.message;
             logMessage(errorMessage, true);
@@ -339,7 +287,7 @@ $(document).ready(function(){
         }
     });
 
-    // 7. Aksi: Salin Log
+    // --- Aksi Salin Log ---
     $('#copyLogBtn').click(function() {
         const logTextarea = document.getElementById('logResponse');
         logTextarea.select();
@@ -354,7 +302,7 @@ $(document).ready(function(){
         }
     });
 
-    // Fungsi untuk mengisi tabel hasil cek kuota login
+    // --- Fungsi Bantuan untuk Tabel ---
     function populateTable(data) {
         const tableBody = $("#packageTableBody");
         tableBody.html('');
