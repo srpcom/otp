@@ -86,7 +86,7 @@
                 <!-- Action Buttons -->
                 <div id="action-buttons-section" style="display: none;">
                     <div class="flex space-x-4 pt-2">
-                         <button type="button" class="w-full bg-yellow-500 text-white font-semibold p-3 rounded-lg hover:bg-yellow-600 transition-colors duration-300 shadow-lg" id="reqOTP">MINTA OTP</button>
+                         <button type="button" class="w-full bg-yellow-500 text-white font-semibold p-3 rounded-lg hover:bg-yellow-600 transition-colors duration-300 shadow-lg" id="reqOTP">MINTA OTP / LOGIN</button>
                          <button type="button" class="w-full bg-blue-500 text-white font-semibold p-3 rounded-lg hover:bg-blue-600 transition-colors duration-300 shadow-lg" id="checkQuotaPublicBtn">CEK KUOTA</button>
                     </div>
                 </div>
@@ -104,14 +104,6 @@
 
                 <!-- Hidden fields for state management -->
                 <input type="hidden" id="auth_id" name="auth_id" value="">
-                <input type="hidden" id="access_token_temp" name="access_token_temp" value="">
-                
-                <!-- Logged In Check Quota Button -->
-                <div id="checkQuotaLoggedInSection" style="display: none;" class="pt-2">
-                    <button type="button" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 transition-colors duration-300 shadow-xl" id="checkQuotaLoggedInBtn">
-                        🎉 Login Berhasil! Klik Untuk Cek Kuota
-                    </button>
-                </div>
             </form>
             
             <!-- Log and Result Section -->
@@ -121,31 +113,10 @@
                     <textarea class="mt-1 w-full p-2 bg-black/20 border border-white/20 text-white rounded-md text-base" id="logResponse" readonly></textarea>
                 </div>
                 
-                <div id="copy-button-section" class="mt-2" style="display: none;">
-                    <button type="button" class="w-full bg-gray-500 text-white font-semibold p-2 rounded-lg hover:bg-gray-600 transition-colors duration-300" id="copyLogBtn">
-                        Salin Hasil Cek Kuota
-                    </button>
-                </div>
-
-                <div id="payment-buttons-section" class="flex space-x-4" style="display: none;">
-                    <a href="https://drive.google.com/file/d/1KMMRc4FlcedA-XNdUdVpYCdBU5AnbvWW/view?usp=sharing" target="_blank" class="w-full text-center bg-green-600 text-white font-semibold p-3 rounded-lg hover:bg-green-700 transition-colors duration-300 shadow-lg">PAYMENT (QRIS)</a>
-                    <a href="https://t.me/srpcomadmin" target="_blank" class="w-full text-center bg-blue-500 text-white font-semibold p-3 rounded-lg hover:bg-blue-600 transition-colors duration-300 shadow-lg">TELEGRAM ADMIN</a>
-                </div>
-
-                <div id="hasilPaket" style="display: none;">
-                    <h2 class="text-lg font-semibold mb-2 text-white">Informasi Paket & Kuota (Login)</h2>
-                    <div class="overflow-x-auto rounded-lg border border-white/20">
-                        <table class="min-w-full divide-y divide-white/20 text-sm">
-                            <thead class="bg-white/10 text-white">
-                                <tr>
-                                    <th class="px-4 py-2 text-left font-semibold">Nama Paket</th>
-                                    <th class="px-4 py-2 text-left font-semibold">Berakhir</th>
-                                    <th class="px-4 py-2 text-left font-semibold">Sisa Kuota</th>
-                                </tr>
-                            </thead>
-                            <tbody id="packageTableBody" class="divide-y divide-white/20"></tbody>
-                        </table>
-                    </div>
+                <!-- Final Action Buttons (New) -->
+                <div id="final-action-buttons" class="flex space-x-4 pt-4" style="display: none;">
+                    <a href="https://srpcom.online/qris" target="_blank" class="w-full text-center bg-green-600 text-white font-semibold p-3 rounded-lg hover:bg-green-700 transition-colors duration-300 shadow-lg">QRIS ADMIN</a>
+                    <a href="https://t.me/srpcomadmin" target="_blank" class="w-full text-center bg-blue-500 text-white font-semibold p-3 rounded-lg hover:bg-blue-600 transition-colors duration-300 shadow-lg">HUB ADMIN</a>
                 </div>
             </div>
         </div>
@@ -192,36 +163,42 @@ $(document).ready(function(){
         el.style.height = (el.scrollHeight) + 'px';
     }
 
-    function resetDynamicButtons() {
-        $('#payment-buttons-section, #copy-button-section, #hasilPaket').slideUp();
+    function handleSuccessfulLogin(response) {
+        logMessage(response.message, false);
+        $('#action-buttons-section, #otp-input-section, #login-button-section').slideUp();
+        $('#final-action-buttons').slideDown();
     }
 
     $('#msisdn').on('input', function() {
         if ($(this).val().length > 0) $('#msisdn-label').fadeOut('fast'); else $('#msisdn-label').fadeIn('fast');
         if ($(this).val().length >= 11) $('#action-buttons-section, #log-section').slideDown();
-        else $('#action-buttons-section, #log-section, #otp-input-section, #login-button-section, #checkQuotaLoggedInSection, #payment-buttons-section, #copy-button-section, #hasilPaket').slideUp();
+        else $('#action-buttons-section, #log-section, #otp-input-section, #login-button-section, #final-action-buttons').slideUp();
     });
     
     $('#otp').on('input', function() {
         if ($(this).val().length >= 6) $('#login-button-section').slideDown(); else $('#login-button-section').slideUp();
     });
 
-    // --- Aksi Minta OTP (Alur Baru) ---
+    // --- Aksi Minta OTP / Login (Alur Baru) ---
     $('#reqOTP').click(async function(){
         const msisdn = $('#msisdn').val();
         if (!msisdn) {
             logMessage('Silakan masukkan Nomor XL terlebih dahulu.', true);
             return;
         }
-        logMessage('Meminta OTP...', false, true);
-        resetDynamicButtons();
+        logMessage('Mencoba login atau meminta OTP...', false, true);
         
-        const s = await callGasBackend('req_otp', msisdn, { msisdn: msisdn });
-        const isError = s.status === false;
-        logMessage(s.message, isError);
-        if (!isError && s.data && s.data.auth_id) {
-            $('#auth_id').val(s.data.auth_id);
-            $('#otp-input-section').slideDown();
+        const s = await callGasBackend('login_flow', msisdn);
+        
+        if (s.login_success) {
+            handleSuccessfulLogin(s);
+        } else {
+            const isError = s.status === false;
+            logMessage(s.message, isError);
+            if (!isError && s.data && s.data.auth_id) {
+                $('#auth_id').val(s.data.auth_id);
+                $('#otp-input-section').slideDown();
+            }
         }
     });
 
@@ -237,30 +214,11 @@ $(document).ready(function(){
         const payload = { auth_id: $('#auth_id').val(), otp: otp };
         const s = await callGasBackend('ver_otp', msisdn, payload);
         
-        const isError = s.status === false;
-        logMessage(s.message, isError);
-        if (!isError && s.data && s.data.access_token) {
-            $('#auth_id').val('');
-            $('#otp').val('');
-            $('#access_token_temp').val(s.data.access_token);
-            $('#action-buttons-section, #otp-input-section, #login-button-section').slideUp();
-            $('#checkQuotaLoggedInSection').slideDown();
-        }
-    });
-
-    // --- Aksi Cek Kuota (setelah login) ---
-    $('#checkQuotaLoggedInBtn').click(async function(){
-        resetDynamicButtons();
-        logMessage('Memeriksa kuota...', false, true);
-        const msisdn = $('#msisdn').val();
-        const payload = { access_token: $('#access_token_temp').val() };
-        const s = await callGasBackend('check_quota', msisdn, payload);
-
-        const isError = s.status === false;
-        logMessage(s.message || 'Data kuota berhasil dimuat.', isError);
-        if (!isError && s.data) {
-            populateTable(s.data);
-            $('#hasilPaket, #copy-button-section').slideDown();
+        if (s.login_success) {
+            handleSuccessfulLogin(s);
+        } else {
+            const isError = s.status === false;
+            logMessage(s.message, isError);
         }
     });
 
@@ -271,7 +229,6 @@ $(document).ready(function(){
             logMessage('Silakan masukkan Nomor XL terlebih dahulu.', true);
             return;
         }
-        resetDynamicButtons();
         logMessage('Proses cek kuota, wait....', false, true);
         const s = await callGasBackend('check_quota_public', msisdn);
 
@@ -281,43 +238,10 @@ $(document).ready(function(){
         } else if (s.status === true) {
             const resultText = s.data && s.data.hasil ? s.data.hasil.replace(/<br\s*\/?>/gi, "\n") : s.message;
             logMessage(resultText, false);
-            $('#copy-button-section').slideDown();
         } else {
              logMessage(s.message || 'Terjadi kesalahan tidak diketahui.', true);
         }
     });
-
-    // --- Aksi Salin Log ---
-    $('#copyLogBtn').click(function() {
-        const logTextarea = document.getElementById('logResponse');
-        logTextarea.select();
-        logTextarea.setSelectionRange(0, 99999);
-        try {
-            document.execCommand('copy');
-            const originalText = $(this).text();
-            $(this).text('Berhasil Disalin!');
-            setTimeout(() => $(this).text(originalText), 2000);
-        } catch (err) {
-            logMessage('Gagal menyalin teks.', true);
-        }
-    });
-
-    // --- Fungsi Bantuan untuk Tabel ---
-    function populateTable(data) {
-        const tableBody = $("#packageTableBody");
-        tableBody.html('');
-        if (data && data.quotas) {
-            data.quotas.forEach(function(quota) {
-                let benefitsHtml = "<ul class='list-disc list-inside space-y-1'>";
-                quota.benefits.forEach(function(benefit) {
-                    benefitsHtml += `<li>${benefit.name}: <b class='text-white'>${benefit.remaining_quota}</b></li>`;
-                });
-                benefitsHtml += "</ul>";
-                const row = `<tr class='hover:bg-white/10'><td class='px-4 py-3 font-medium text-white'>${quota.name}</td><td class='px-4 py-3 text-gray-300'>${quota.expired_at}</td><td class='px-4 py-3 text-gray-300'>${benefitsHtml}</td></tr>`;
-                tableBody.append(row);
-            });
-        }
-    }
 });
 </script>
 
